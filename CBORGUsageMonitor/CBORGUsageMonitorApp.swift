@@ -66,6 +66,14 @@ private struct MenuBarPanel: View {
                     .foregroundStyle(.secondary)
             }
 
+            BudgetProgressBar(
+                percent: monitor.snapshot.displayPercent,
+                thresholdPercent: monitor.thresholdPercent,
+                color: monitor.snapshot.health.color,
+                height: 9,
+                showsThreshold: false
+            )
+
             VStack(alignment: .leading, spacing: 6) {
                 usageLine("Spend", CBORGFormatters.currency(monitor.snapshot.displaySpend))
                 usageLine("Budget", CBORGFormatters.currency(monitor.snapshot.displayBudget))

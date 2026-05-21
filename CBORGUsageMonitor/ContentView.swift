@@ -13,7 +13,7 @@ struct ContentView: View {
             usagePanel
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(minWidth: 900, minHeight: 560)
+        .frame(minWidth: 860, minHeight: 500)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -123,7 +123,7 @@ struct ContentView: View {
 
             Spacer(minLength: 0)
         }
-        .padding(22)
+        .padding(20)
         .background(Color(nsColor: .controlBackgroundColor))
     }
 
@@ -150,57 +150,25 @@ struct ContentView: View {
                     .background(monitor.snapshot.health.color.opacity(0.12), in: Capsule())
             }
 
-            HStack(spacing: 14) {
-                UsageMetricCard(
-                    title: "Budget Used",
-                    value: CBORGFormatters.percent(monitor.snapshot.displayPercent),
-                    detail: "Alert at \(CBORGFormatters.percent(monitor.thresholdPercent))",
-                    systemImage: "gauge.with.dots.needle.67percent",
-                    color: monitor.snapshot.health.color
-                )
+            BudgetProgressCard(snapshot: monitor.snapshot, thresholdPercent: monitor.thresholdPercent)
 
-                UsageMetricCard(
-                    title: "Spend",
-                    value: CBORGFormatters.currency(monitor.snapshot.displaySpend),
-                    detail: "This budget cycle",
-                    systemImage: "dollarsign.circle.fill",
-                    color: .green
-                )
+            HStack(alignment: .top, spacing: 14) {
+                InfoCard(title: "Account") {
+                    usageRow("Alias", monitor.snapshot.userAlias ?? "Unknown")
+                    usageRow("Email", monitor.snapshot.userEmail ?? monitor.snapshot.userID ?? "Unknown")
+                    usageRow("Cycle", monitor.snapshot.userBudgetDuration ?? "Unknown")
+                    usageRow("RPM", monitor.snapshot.userRPM.map(String.init) ?? "Unknown")
+                    usageRow("TPM", monitor.snapshot.userTPM.map(String.init) ?? "Unknown")
+                }
 
-                UsageMetricCard(
-                    title: "Budget",
-                    value: CBORGFormatters.currency(monitor.snapshot.displayBudget),
-                    detail: CBORGFormatters.resetDate(monitor.snapshot.displayReset),
-                    systemImage: "calendar.badge.clock",
-                    color: .blue
-                )
+                InfoCard(title: "API Key") {
+                    usageRow("Alias", monitor.snapshot.keyAlias ?? "Unknown")
+                    usageRow("Name", monitor.snapshot.keyName ?? "Unknown")
+                    usageRow("Spend", CBORGFormatters.currency(monitor.snapshot.keySpend))
+                    usageRow("Active", monitor.snapshot.keyLastActive ?? "Unknown")
+                    usageRow("Keys", String(monitor.snapshot.keyCount))
+                }
             }
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Account")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-
-                usageRow("User alias", monitor.snapshot.userAlias ?? "Unknown")
-                usageRow("User email", monitor.snapshot.userEmail ?? monitor.snapshot.userID ?? "Unknown")
-                usageRow("User budget duration", monitor.snapshot.userBudgetDuration ?? "Unknown")
-                usageRow("RPM limit", monitor.snapshot.userRPM.map(String.init) ?? "Unknown")
-                usageRow("TPM limit", monitor.snapshot.userTPM.map(String.init) ?? "Unknown")
-            }
-            .padding(16)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("API Key")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-
-                usageRow("Alias", monitor.snapshot.keyAlias ?? "Unknown")
-                usageRow("Name", monitor.snapshot.keyName ?? "Unknown")
-                usageRow("Spend", CBORGFormatters.currency(monitor.snapshot.keySpend))
-                usageRow("Last active", monitor.snapshot.keyLastActive ?? "Unknown")
-                usageRow("Visible keys", String(monitor.snapshot.keyCount))
-            }
-            .padding(16)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
 
             if let error = monitor.snapshot.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -230,42 +198,149 @@ struct ContentView: View {
     }
 }
 
-private struct UsageMetricCard: View {
-    let title: String
-    let value: String
-    let detail: String
-    let systemImage: String
-    let color: Color
+private struct BudgetProgressCard: View {
+    let snapshot: CBORGUsageSnapshot
+    let thresholdPercent: Double
+
+    private var remainingText: String {
+        guard let spend = snapshot.displaySpend, let budget = snapshot.displayBudget else {
+            return "Unknown"
+        }
+        return CBORGFormatters.currency(max(budget - spend, 0))
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(color)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("Budget Progress", systemImage: "gauge.with.dots.needle.67percent")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(snapshot.health.color)
+                    Text("Alert at \(CBORGFormatters.percent(thresholdPercent))")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+
                 Spacer()
+
+                Text(CBORGFormatters.percent(snapshot.displayPercent))
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundStyle(snapshot.health.color)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 26, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.58)
-                Text(title)
-                    .font(.system(size: 12, weight: .bold))
-                Text(detail)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+            BudgetProgressBar(
+                percent: snapshot.displayPercent,
+                thresholdPercent: thresholdPercent,
+                color: snapshot.health.color,
+                height: 14,
+                showsThreshold: true
+            )
+
+            HStack(spacing: 12) {
+                ProgressStat(title: "Spent", value: CBORGFormatters.currency(snapshot.displaySpend), color: .green)
+                ProgressStat(title: "Budget", value: CBORGFormatters.currency(snapshot.displayBudget), color: .blue)
+                ProgressStat(title: "Remaining", value: remainingText, color: snapshot.health.color)
             }
         }
         .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 142, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
         .overlay {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(.secondary.opacity(0.12), lineWidth: 1)
         }
+    }
+}
+
+private struct ProgressStat: View {
+    let title: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(size: 16, weight: .black, design: .rounded))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct InfoCard<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Text(title)
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+
+            content
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(.secondary.opacity(0.12), lineWidth: 1)
+        }
+    }
+}
+
+struct BudgetProgressBar: View {
+    let percent: Double?
+    let thresholdPercent: Double
+    let color: Color
+    let height: CGFloat
+    let showsThreshold: Bool
+
+    private var progress: Double {
+        min(max((percent ?? 0) / 100, 0), 1)
+    }
+
+    private var threshold: Double {
+        min(max(thresholdPercent / 100, 0), 1)
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let progressWidth = progress > 0 ? min(width, max(width * progress, height)) : 0
+            let thresholdX = min(max(width * threshold - 1, 0), max(width - 2, 0))
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.14))
+
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [color.opacity(0.78), color],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: progressWidth)
+
+                if showsThreshold {
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.45))
+                        .frame(width: 2, height: height + 7)
+                        .offset(x: thresholdX)
+                }
+            }
+        }
+        .frame(height: height)
+        .clipShape(Capsule())
+        .accessibilityLabel("Budget usage")
+        .accessibilityValue(CBORGFormatters.percent(percent))
     }
 }
