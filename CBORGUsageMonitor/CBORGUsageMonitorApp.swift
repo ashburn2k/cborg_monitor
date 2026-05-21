@@ -40,6 +40,16 @@ private struct MenuBarPanel: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer(spacing: 12) {
+                panelContent
+            }
+        } else {
+            panelContent
+        }
+    }
+
+    private var panelContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 Image(systemName: monitor.snapshot.health.symbolName)
@@ -57,35 +67,41 @@ private struct MenuBarPanel: View {
                 Spacer()
             }
 
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(CBORGFormatters.percent(monitor.snapshot.displayPercent))
-                    .font(.system(size: 34, weight: .black, design: .rounded))
-                    .minimumScaleFactor(0.7)
-                Text("of budget")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
-            }
+            VStack(alignment: .leading, spacing: 11) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(CBORGFormatters.percent(monitor.snapshot.displayPercent))
+                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .minimumScaleFactor(0.7)
+                    Text("of budget")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
 
-            BudgetProgressBar(
-                percent: monitor.snapshot.displayPercent,
-                thresholdPercent: monitor.thresholdPercent,
-                color: monitor.snapshot.health.color,
-                height: 9,
-                showsThreshold: false
-            )
+                BudgetProgressBar(
+                    percent: monitor.snapshot.displayPercent,
+                    thresholdPercent: monitor.thresholdPercent,
+                    color: monitor.snapshot.health.color,
+                    height: 9,
+                    showsThreshold: false
+                )
 
-            VStack(alignment: .leading, spacing: 6) {
-                usageLine("Spend", CBORGFormatters.currency(monitor.snapshot.displaySpend))
-                usageLine("Budget", CBORGFormatters.currency(monitor.snapshot.displayBudget))
-                usageLine("Reset", CBORGFormatters.resetDate(monitor.snapshot.displayReset))
-                usageLine("Checked", CBORGFormatters.compactTime(monitor.snapshot.checkedAt))
+                VStack(alignment: .leading, spacing: 6) {
+                    usageLine("Spend", CBORGFormatters.currency(monitor.snapshot.displaySpend))
+                    usageLine("Budget", CBORGFormatters.currency(monitor.snapshot.displayBudget))
+                    usageLine("Reset", CBORGFormatters.resetDate(monitor.snapshot.displayReset))
+                    usageLine("Checked", CBORGFormatters.compactTime(monitor.snapshot.checkedAt))
+                }
             }
+            .padding(14)
+            .cborgGlassSurface(cornerRadius: 18, tint: monitor.snapshot.health.color)
 
             if let error = monitor.snapshot.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.orange)
                     .lineLimit(3)
+                    .padding(10)
+                    .cborgGlassSurface(cornerRadius: 14, tint: .orange)
             }
 
             HStack(spacing: 8) {
@@ -99,6 +115,7 @@ private struct MenuBarPanel: View {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
                 }
+                .cborgPrimaryActionStyle()
                 .disabled(!monitor.canRefresh)
 
                 Button {
@@ -107,8 +124,9 @@ private struct MenuBarPanel: View {
                 } label: {
                     Label("Dashboard", systemImage: "chart.bar.xaxis")
                 }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
             }
-            .buttonStyle(.bordered)
 
             Divider()
 

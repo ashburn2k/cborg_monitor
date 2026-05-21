@@ -4,17 +4,31 @@ struct ContentView: View {
     @EnvironmentObject private var monitor: CBORGMonitorViewModel
 
     var body: some View {
-        HStack(spacing: 0) {
-            settingsPanel
-                .frame(width: 360)
+        rootLayout
+            .frame(minWidth: 860, minHeight: 500)
+            .background(.windowBackground)
+    }
 
-            Divider()
+    @ViewBuilder
+    private var rootLayout: some View {
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer(spacing: 16) {
+                contentLayout
+            }
+        } else {
+            contentLayout
+        }
+    }
+
+    private var contentLayout: some View {
+        HStack(alignment: .top, spacing: 16) {
+            settingsPanel
+                .frame(width: 340)
 
             usagePanel
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(minWidth: 860, minHeight: 500)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .padding(16)
     }
 
     private var settingsPanel: some View {
@@ -41,7 +55,7 @@ struct ContentView: View {
                     } label: {
                         Label("Save Key", systemImage: "key.fill")
                     }
-                    .buttonStyle(.borderedProminent)
+                    .cborgPrimaryActionStyle()
 
                     Button(role: .destructive) {
                         monitor.deleteAPIKey()
@@ -49,6 +63,7 @@ struct ContentView: View {
                         Label("Remove", systemImage: "trash")
                     }
                     .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
                     .disabled(!monitor.keyIsSaved)
                 }
             }
@@ -88,7 +103,7 @@ struct ContentView: View {
                 } label: {
                     Label("Save Settings", systemImage: "checkmark.circle")
                 }
-                .buttonStyle(.bordered)
+                .cborgPrimaryActionStyle()
             }
 
             HStack(spacing: 8) {
@@ -102,7 +117,7 @@ struct ContentView: View {
                         Label("Refresh Now", systemImage: "arrow.clockwise")
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .cborgPrimaryActionStyle()
                 .disabled(!monitor.canRefresh)
 
                 Button {
@@ -111,6 +126,7 @@ struct ContentView: View {
                     Label("Clear Cache", systemImage: "xmark.bin")
                 }
                 .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
             }
 
             if !monitor.statusMessage.isEmpty {
@@ -120,15 +136,13 @@ struct ContentView: View {
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(20)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .padding(18)
+        .cborgGlassSurface(cornerRadius: 22, interactive: true)
     }
 
     private var usagePanel: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(monitor.snapshot.userID ?? "CBORG Account")
@@ -147,7 +161,7 @@ struct ContentView: View {
                     .foregroundStyle(monitor.snapshot.health.color)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(monitor.snapshot.health.color.opacity(0.12), in: Capsule())
+                    .cborgGlassCapsule(tint: monitor.snapshot.health.color)
             }
 
             BudgetProgressCard(snapshot: monitor.snapshot, thresholdPercent: monitor.thresholdPercent)
@@ -175,12 +189,10 @@ struct ContentView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.orange)
                     .padding(12)
-                    .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                    .cborgGlassSurface(cornerRadius: 14, tint: .orange)
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(24)
+        .padding(.vertical, 4)
     }
 
     private func usageRow(_ label: String, _ value: String) -> some View {
@@ -246,11 +258,7 @@ private struct BudgetProgressCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(.secondary.opacity(0.12), lineWidth: 1)
-        }
+        .cborgGlassSurface(cornerRadius: 18, tint: snapshot.health.color)
     }
 }
 
@@ -287,11 +295,7 @@ private struct InfoCard<Content: View>: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(.secondary.opacity(0.12), lineWidth: 1)
-        }
+        .cborgGlassSurface(cornerRadius: 16)
     }
 }
 
