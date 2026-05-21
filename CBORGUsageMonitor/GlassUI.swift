@@ -47,3 +47,14 @@ extension View {
         }
     }
 }
+
+extension CBORGUsageHealth {
+    var budgetMeterColor: Color {
+        switch self {
+        case .warning, .error:
+            return color
+        case .ok, .needsKey:
+            return .blue
+        }
+    }
+}

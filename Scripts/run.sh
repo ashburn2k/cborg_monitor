@@ -26,6 +26,11 @@ codesign --force --sign - --timestamp=none \
 
 pluginkit -a "$WIDGET_PATH"
 
+if pgrep -x CBORGUsageMonitor >/dev/null; then
+  pkill -x CBORGUsageMonitor
+  sleep 1
+fi
+
 if [[ -n "${CBORG_API_KEY:-}" ]]; then
   launchctl setenv CBORG_API_KEY "$CBORG_API_KEY"
   open "$APP_PATH"

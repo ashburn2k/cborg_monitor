@@ -245,13 +245,13 @@ private struct BudgetProgressCard: View {
             BudgetProgressBar(
                 percent: snapshot.displayPercent,
                 thresholdPercent: thresholdPercent,
-                color: snapshot.health.color,
-                height: 14,
+                color: snapshot.health.budgetMeterColor,
+                height: 12,
                 showsThreshold: true
             )
 
             HStack(spacing: 12) {
-                ProgressStat(title: "Spent", value: CBORGFormatters.currency(snapshot.displaySpend), color: .green)
+                ProgressStat(title: "Spent", value: CBORGFormatters.currency(snapshot.displaySpend), color: snapshot.health.budgetMeterColor)
                 ProgressStat(title: "Budget", value: CBORGFormatters.currency(snapshot.displayBudget), color: .blue)
                 ProgressStat(title: "Remaining", value: remainingText, color: snapshot.health.color)
             }
@@ -317,29 +317,27 @@ struct BudgetProgressBar: View {
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let progressWidth = progress > 0 ? min(width, max(width * progress, height)) : 0
+            let progressWidth = min(max(width * progress, 0), width)
             let thresholdX = min(max(width * threshold - 1, 0), max(width - 2, 0))
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.secondary.opacity(0.14))
+                    .fill(Color.primary.opacity(0.08))
 
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [color.opacity(0.78), color],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                Rectangle()
+                    .fill(color.opacity(0.48))
                     .frame(width: progressWidth)
 
                 if showsThreshold {
-                    Rectangle()
-                        .fill(Color.primary.opacity(0.45))
-                        .frame(width: 2, height: height + 7)
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(Color.primary.opacity(0.28))
+                        .frame(width: 2, height: height + 4)
                         .offset(x: thresholdX)
                 }
+            }
+            .overlay {
+                Capsule()
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             }
         }
         .frame(height: height)

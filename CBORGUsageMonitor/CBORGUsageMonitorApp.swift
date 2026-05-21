@@ -80,8 +80,8 @@ private struct MenuBarPanel: View {
                 BudgetProgressBar(
                     percent: monitor.snapshot.displayPercent,
                     thresholdPercent: monitor.thresholdPercent,
-                    color: monitor.snapshot.health.color,
-                    height: 9,
+                    color: monitor.snapshot.health.budgetMeterColor,
+                    height: 8,
                     showsThreshold: false
                 )
 
