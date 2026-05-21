@@ -136,6 +136,21 @@ struct ContentView: View {
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            Divider()
+
+            HStack(spacing: 10) {
+                Text(AppInfo.versionText)
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 8)
+
+                Link(destination: AppInfo.githubURL) {
+                    Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                .foregroundStyle(.secondary)
+            }
+            .font(.system(size: 12, weight: .semibold))
         }
         .padding(18)
         .cborgGlassSurface(cornerRadius: 22, interactive: true)

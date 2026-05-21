@@ -130,6 +130,19 @@ private struct MenuBarPanel: View {
 
             Divider()
 
+            HStack(spacing: 8) {
+                Text(AppInfo.versionText)
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 8)
+
+                Link(destination: AppInfo.githubURL) {
+                    Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                .foregroundStyle(.secondary)
+            }
+            .font(.system(size: 11, weight: .semibold))
+
             Button("Quit CBORG Usage") {
                 NSApp.terminate(nil)
             }

@@ -2,6 +2,10 @@
 
 Native macOS menu bar app and WidgetKit widget for the CBORG `/user/info` usage endpoint.
 
+Version: `1.0 (1)`
+
+GitHub: [ashburn2k/cborg_monitor](https://github.com/ashburn2k/cborg_monitor)
+
 ## What it does
 
 - Saves the CBORG API key in macOS Keychain.
